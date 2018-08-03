@@ -1,7 +1,6 @@
 pragma solidity ^0.4.23;
 
 
-// import 'github.com/OpenZeppelin/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol';
 import "../node_modules/openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "./SecondSpaceLiquidityControl.sol";
 
@@ -12,8 +11,11 @@ contract SecondSpaceCoin is StandardToken , SecondSpaceLiquidityControl {
     uint256 public INITIAL_SUPPLY = 100 * (10**9) * (10**18);
 
     constructor() public {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = totalSupply_;
+        totalSupply_            = INITIAL_SUPPLY;
+        balances[msg.sender]    = totalSupply_;
+        executiveAddress        = msg.sender;
+        addAddressToWhitelist(executiveAddress);
+
         emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
 
@@ -22,17 +24,8 @@ contract SecondSpaceCoin is StandardToken , SecondSpaceLiquidityControl {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        require(!locked || msg.sender == financialAddress,"Trading is not allowed for the time being");
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
+    function transfer(address _to, uint256 _value)  public restrictedLiquidity returns (bool) {
+        return super.transfer(_to, _value);
     }
 
 
@@ -48,18 +41,9 @@ contract SecondSpaceCoin is StandardToken , SecondSpaceLiquidityControl {
         uint256 _value
     )
         public
+        restrictedLiquidity
         returns (bool)
     {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        require(!locked || msg.sender == financialAddress,"Trading is not allowed for the time being");
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
+        return super.transferFrom(_from, _to, _value);
     }
 }

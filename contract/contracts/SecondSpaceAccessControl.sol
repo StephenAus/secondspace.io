@@ -1,10 +1,10 @@
 pragma solidity ^0.4.23;
 
-import "../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../node_modules/openzeppelin-solidity/contracts/access/Whitelist.sol";
 
 // 管理团队钱包地址
 // 代币的分配和释放
-contract SecondSpaceAccessControl is Ownable{
+contract SecondSpaceAccessControl is Whitelist{
 
     // 设置团队管理者钱包地址.
     // Executive 执行人
@@ -49,23 +49,33 @@ contract SecondSpaceAccessControl is Ownable{
     function setExecutive(address _new) external onlyExecutive {
         require(_new != address(0));
 
+        if(executiveAddress != address(0)){
+            removeAddressFromWhitelist(executiveAddress);
+        }
         executiveAddress = _new;
+        addAddressToWhitelist(executiveAddress);
     }
 
     /// @dev Assigns a new address to act as the Financial. Only available to the current Executive.
     /// @param _new The address of the new Financial
     function setFinancial(address _new) external onlyExecutive {
         require(_new != address(0));
-
+        if(financialAddress != address(0)){
+            removeAddressFromWhitelist(financialAddress);
+        }
         financialAddress = _new;
+        addAddressToWhitelist(financialAddress);
     }
 
     /// @dev Assigns a new address to act as the Platform. Only available to the current Executive.
     /// @param _new The address of the new Platform
     function setPlatform(address _new) external onlyExecutive {
         require(_new != address(0));
-
+        if(platformAddress != address(0)){
+            removeAddressFromWhitelist(platformAddress);
+        }
         platformAddress = _new;
+        addAddressToWhitelist(platformAddress);
     }
 
 

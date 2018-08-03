@@ -18,6 +18,15 @@ contract SecondSpaceLiquidityControl is SecondSpaceAccessControl {
         require(locked);
         _;
     }
+    /**
+    * @dev Throws if operator is not whitelisted.
+    */
+    modifier restrictedLiquidity{
+        if(locked){
+            checkRole(msg.sender, ROLE_WHITELISTED);
+        }
+        _;
+    }
 
     /// @dev Called by any "C-level" role to pause the contract. Used only when
     ///  a bug or exploit is detected and we need to limit damage.
@@ -30,7 +39,7 @@ contract SecondSpaceLiquidityControl is SecondSpaceAccessControl {
     ///  compromised.
     /// @notice This is public rather than external so it can be called by
     ///  derived contracts.
-    function unlock() public onlyFinancial whenLocked {
+    function unlock() external onlyFinancial whenLocked {
         locked = false;
     }
 }
