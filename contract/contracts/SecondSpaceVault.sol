@@ -1,10 +1,9 @@
 pragma solidity ^0.4.23;
 
-import "./SecondSpaceLiquidityControl.sol";
-import "../node_modules/openzeppelin-solidity/contracts//math/SafeMath.sol";
+import "./SecondSpaceVesting.sol";
+import "./SecondSpaceCoin.sol";
 
-contract SecondSpaceVault is SecondSpaceLiquidityControl {
-    using SafeMath for uint256;
+contract SecondSpaceICO is SecondSpaceVesting {
 
     //Wallet Addresses for allocation
     // 创始团队钱包地址
@@ -28,48 +27,17 @@ contract SecondSpaceVault is SecondSpaceLiquidityControl {
     // 市场流通  60%
     uint256 public publicReserveAllocation        = 0.6 * 100 * (10 ** 9) * (10 ** 18);
 
-    // variables
-    // 资金锁定时间
-    uint256 public timeLock = 3 * 365 days;
-    // 分36个月，分批释放
-    uint256 public vestingStages = 36;
 
+    SecondSpaceCoin public token;
 
-    /** Reserve allocations */
-    mapping(address => uint256) public allocations;
+    constructor() public {
+        owner = msg.sender;
+        executiveAddress = msg.sender;
 
-    /** When timeLocks are over (UNIX Timestamp)  */
-    mapping(address => uint256) public timeLocks;
-
-    /** How many tokens each reserve wallet has claimed */
-    mapping(address => uint256) public claimed;
-
-    /** When this vault was locked (UNIX Timestamp)*/
-    uint256 public lockedAt = 0;
-
-    // events
-    /** Allocated reserve tokens */
-    event Allocated(address wallet, uint256 value);
-
-    /** Distributed reserved tokens */
-    event Distributed(address wallet, uint256 value);
-
-    /** Tokens have been locked */
-    event Locked(uint256 lockTime);
-
-    // modifiers
-    //Has not been locked yet
-    modifier notLocked {
-        require(lockedAt == 0);
-        _;
+        // token = SecondSpaceCoin(tokenAddress);
     }
 
-    modifier isLocked {
-        require(lockedAt > 0);
-        _;
-    }
-
-     /// @param _new The address of the new Executive
+    /// @param _new The address of the new Executive
     function setTeamReserveWallet(address _new) external onlyExecutive {
         require(_new != address(0));
 
@@ -96,32 +64,73 @@ contract SecondSpaceVault is SecondSpaceLiquidityControl {
         allocations[teamReserveWallet] = teamReserveAllocation;
         allocations[foundationReserveWallet] = foundationReserveAllocation;
         allocations[advisorReserveWallet] = advisorReserveAllocation;
+        allocations[financialAddress] = institutionalReserveAllocation;
+        allocations[platformAddress] = publicReserveAllocation;
 
         emit Allocated(teamReserveWallet, teamReserveAllocation);
         emit Allocated(foundationReserveWallet, foundationReserveAllocation);
         emit Allocated(advisorReserveWallet, advisorReserveAllocation);
+        emit Allocated(financialAddress, institutionalReserveAllocation);
+        emit Allocated(platformAddress, publicReserveAllocation);
+
 
         lockedAt = block.timestamp;
-
-        timeLocks[teamReserveWallet] = lockedAt.add(timeLock);
-        timeLocks[foundationReserveWallet] = lockedAt.add(timeLock);
-
         emit Locked(lockedAt);
     }
 
-    //Current Vesting stage 
-    function teamVestingStage() public view onlyFinancial returns(uint256){
-        // Every 3 months
-        uint256 vestingMonths = timeLock.div(vestingStages);
+    function distribute() public isLocked onlyFinancial {
 
-        uint256 stage = (block.timestamp.sub(lockedAt)).div(vestingMonths);
-
-        //Ensures team vesting stage doesn't go past teamVestingStages
-        if(stage > vestingStages){
-            stage = vestingStages;
-        }
-        return stage;
+        claimTokenReserve(advisorReserveWallet);
+        claimTokenReserve(financialAddress);
+        claimTokenReserve(platformAddress);
+        
+    }
+    // Number of tokens that are still locked
+    function getLockedBalance() public view onlyFinancial returns (uint256 tokensLocked) {
+        return allocations[msg.sender].sub(claimed[msg.sender]);
     }
 
+    //Distribute tokens for non-vesting reserve wallets
+    function claimTokenReserve(address reserveWallet) onlyFinancial isLocked private {
+        
+        require(reserveWallet == advisorReserveWallet 
+                || reserveWallet == financialAddress
+                || reserveWallet == platformAddress);
 
+        // Must Only claim once
+        require(allocations[reserveWallet] > 0);
+        require(claimed[reserveWallet] == 0);
+
+        uint256 amount = allocations[reserveWallet];
+
+        claimed[reserveWallet] = amount;
+
+        require(token.transfer(reserveWallet, amount));
+
+        emit Distributed(reserveWallet, amount);
+    }
+
+     //Claim tokens for team reserve wallet
+    function claimReserve(address reserveWallet) public onlyFinancial isLocked  {
+
+        require(reserveWallet == teamReserveWallet || reserveWallet == foundationReserveWallet);
+
+        uint256 vestingStage = currentVestingStage();
+
+        //Amount of tokens the team should have at this vesting stage
+        uint256 totalUnlocked = vestingStage.mul(allocations[reserveWallet]).div(vestingStages);
+
+        require(totalUnlocked <= allocations[reserveWallet]);
+
+        //Previously claimed tokens must be less than what is unlocked
+        require(claimed[reserveWallet] < totalUnlocked);
+
+        uint256 payment = totalUnlocked.sub(claimed[reserveWallet]);
+
+        claimed[reserveWallet] = totalUnlocked;
+
+        require(token.transfer(reserveWallet, payment));
+
+        emit Distributed(reserveWallet, payment);
+    }
 }

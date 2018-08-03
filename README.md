@@ -1,6 +1,13 @@
-SecondSpace 第二空间项目白皮书
+# SecondSpace
 
-https://www.namecheap.com/
-StephenAustinAu
+http://www.secondspace.io
 
-secondspace.io
+
+
+### Deployment
+
+truffle-flattener contracts/SecondSpaceCoin.sol > SecondSpaceCoinRemix.sol
+
+truffle-flattener contracts/SecondSpaceVault.sol > SecondSpaceVaultRemix.sol
+
+> https://github.com/alcuadrado/truffle-flattener

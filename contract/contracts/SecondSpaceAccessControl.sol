@@ -46,7 +46,7 @@ contract SecondSpaceAccessControl is Whitelist{
 
     /// @dev Assigns a new address to act as the Executive. Only available to the current Executive.
     /// @param _new The address of the new Executive
-    function setExecutive(address _new) external onlyExecutive {
+    function setExecutive(address _new) public onlyExecutive {
         require(_new != address(0));
 
         if(executiveAddress != address(0)){
@@ -58,7 +58,7 @@ contract SecondSpaceAccessControl is Whitelist{
 
     /// @dev Assigns a new address to act as the Financial. Only available to the current Executive.
     /// @param _new The address of the new Financial
-    function setFinancial(address _new) external onlyExecutive {
+    function setFinancial(address _new) public onlyExecutive {
         require(_new != address(0));
         if(financialAddress != address(0)){
             removeAddressFromWhitelist(financialAddress);
@@ -69,7 +69,7 @@ contract SecondSpaceAccessControl is Whitelist{
 
     /// @dev Assigns a new address to act as the Platform. Only available to the current Executive.
     /// @param _new The address of the new Platform
-    function setPlatform(address _new) external onlyExecutive {
+    function setPlatform(address _new) public onlyExecutive {
         require(_new != address(0));
         if(platformAddress != address(0)){
             removeAddressFromWhitelist(platformAddress);
