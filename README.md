@@ -1,6 +1,6 @@
 # SecondSpace
 
-http://www.secondspace.io
+https://secondspace.io
 
 ### Introduction
 
@@ -38,3 +38,12 @@ truffle-flattener contracts/SecondSpaceVault.sol > build/SecondSpaceVault.remix.
 ```
 
 > https://github.com/alcuadrado/truffle-flattener
+
+
+### Pandoc
+
+```shell
+pandoc -f markdown+tex_math_dollars -t docx ./WhitePaper.md -o build/WhitePaper.docx
+
+pandoc -f markdown+tex_math_dollars -t html5 WhitePaper.md -o build/WhitePaper.html
+```
