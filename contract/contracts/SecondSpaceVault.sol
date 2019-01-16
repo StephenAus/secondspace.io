@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import "./SecondSpaceVesting.sol";
 import "./SecondSpaceCoin.sol";
 
-contract SecondSpaceICO is SecondSpaceVesting {
+contract SecondSpaceVault is SecondSpaceVesting {
 
     //Wallet Addresses for allocation
     // 创始团队钱包地址
@@ -30,11 +30,11 @@ contract SecondSpaceICO is SecondSpaceVesting {
 
     SecondSpaceCoin public token;
 
-    constructor() public {
+    constructor(address _tokenAddress) public {
         owner = msg.sender;
         executiveAddress = msg.sender;
 
-        // token = SecondSpaceCoin(tokenAddress);
+        token = SecondSpaceCoin(_tokenAddress);
     }
 
     /// @param _new The address of the new Executive
@@ -86,8 +86,8 @@ contract SecondSpaceICO is SecondSpaceVesting {
         
     }
     // Number of tokens that are still locked
-    function getLockedBalance() public view onlyFinancial returns (uint256 tokensLocked) {
-        return allocations[msg.sender].sub(claimed[msg.sender]);
+    function getLockedBalance(address _reserveAddress) public view returns (uint256 tokensLocked) {
+        return allocations[_reserveAddress].sub(claimed[_reserveAddress]);
     }
 
     //Distribute tokens for non-vesting reserve wallets

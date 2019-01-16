@@ -9,7 +9,7 @@ contract('SecondSpaceCoin',  async function(accounts) {
     
   });
 
-  it("SecondSpaceCoin is Locked", async function() {
+  it("SecondSpaceCoin is locked", async function() {
     let instance = await SecondSpaceCoin.deployed();
     let balance = await instance.locked();
 
@@ -68,7 +68,6 @@ contract('SecondSpaceCoin',  async function(accounts) {
       
     }
   });
-
 
   it("other transfer throws error", async function() {
     let instance = await SecondSpaceCoin.deployed();
